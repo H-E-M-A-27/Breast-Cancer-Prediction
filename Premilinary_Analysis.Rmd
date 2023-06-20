@@ -1,0 +1,155 @@
+---
+title: "Breast Cancer Gene Expression Profiles"
+author: 
+- Atharva Abhijit Kulkarni
+- Hemashree Kilari 
+- Matthew Greene 
+- Shashank Bettada Sathya Thirtha 
+- Vinu Baburaj
+date: "10/30/2022"
+output: 
+  pdf_document:
+    toc: yes
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(warnings = FALSE, echo = FALSE)
+```
+
+## Summary
+
+Breast cancer is the most prevalent cancer among middle aged and older women. The American Cancer Society estimates that 2.8 million women worldwide will be diagnosed with breast cancer. Our goal is to build a prediction model that predicts the chance of surviving breast cancer. The dataset for this analysis and prediction is called Breast Cancer Gene Expression Profiles (METABRIC) and is found on Kaggle.
+
+## Proposed Plan
+
+Our goal for this project is to perform an in depth analysis of variables influencing the chance of overcoming breast cancer. We begin by doing a preliminary analysis of the available data. As there are a total of 693 variables in our data set, we only consider a few variables in the initial analysis that help us the screen the overall data set for some preliminary results. In the pre-processing stage, the nil values are eliminated and the data is streamlined for analysis that require exclusion of redundant values in categorical variables. Prior to EDA we have to understand in medical terms the numerous variables that are available to us for analysis. This knowledge can streamline the process of performing EDA and help in interpreting the results.EDA helps us in identifying key variables that have a strong correlation to higher and lower chances of survival respectively. Identifying these key variables, will help us in building various classification models which predict the chances of survival of a patient. We plan on building different classification models using Logistic Regression, K-Nearest Neighbors, Naive Bayes, Support Vector Machines (SVM) and Random Forests and compare their performances.  
+
+## Preliminary Results
+
+``` {r Preliminary code, message = FALSE, warning = FALSE, echo = FALSE}
+
+library(tidyverse)
+library(plyr)
+library(dplyr)
+library(ggplot2)
+
+df1 <- read.csv(
+  file = paste("/Users/shashankbs/Desktop/METABRIC_RNA_Mutation.csv", sep=""))
+
+df2 <- subset (
+  df1,
+  select = c(
+    patient_id,
+    age_at_diagnosis,
+    type_of_breast_surgery,
+    cancer_type_detailed,
+    chemotherapy,
+    hormone_therapy,
+    overall_survival_months,
+    radio_therapy,
+    tumor_size,
+    tumor_stage,
+    death_from_cancer
+  ))
+
+df2 <- na.omit(df2)
+
+df4 <- df2[df2$death_from_cancer %in%  c("Living", "Died of Disease", "Died of Other Causes"), ] 
+
+```
+
+Firstly we need to understand how many patient's details are available to us in this data set and what their current status of existence is. In order to analyse this, a bar graph is plotted with the the count of patients in each stage of breast cancer faceted by their existence status.
+
+``` {r Existence status, message = FALSE, warning = FALSE, echo = FALSE}
+# Use below code
+ggplot(
+  df4,
+  aes(x = tumor_stage)) +
+  geom_bar(fill = "#F4C9CA") +
+  facet_wrap(~death_from_cancer) +
+  labs(x = "Breast Cancer Stage",
+       y = "Number of patients",
+       title = "Visualization of count of breast cancer patients in 
+       our analysis faceted by patient's status of existence") +
+  theme(legend.position = none) +
+  theme_classic()
+
+```
+
+Observations:
+
+a. Across all 3 facets, we have the most data on patients in the stage 2 of breast cancer.
+
+b. We have the least data on the pre-cancerous stage 0 followed by stage 4.
+
+
+Next in our preliminary analysis, we would like to see the duration of survival in deceased patients across different stages of the cancer. The survival period is calculated from the time of intervention to the time of death.
+
+``` {r 4 stages, message = FALSE, warning = FALSE, echo = FALSE}
+df3 <- df2[df2$death_from_cancer == "Died of Disease", ]
+df3 <- na.omit(df3)
+
+# Use below code
+ggplot(
+  data = df3,
+  mapping = aes(x = overall_survival_months)) +
+  geom_histogram(bins = 50, fill = "#F4C9CA") +
+  facet_wrap(~tumor_stage) +
+  labs(x = "Months",
+       y = "Count",
+       title = "Visualization of survival time in months from 
+       intervention to death faceted by stage of breast cancer") +
+  theme_classic()
+
+```
+
+Observations:
+
+a. We see that most of the patients in the visualization were in their second stage of cancer.
+
+b. Across all 4 stages, the distribution seems to be right skewed.
+
+c. Range of survival period is highest in the 1st stage of cancer and lowest in the 4th stage.
+
+
+Finally we wanted to explore the relationship between the size of the tumor and stage of cancer. It's imperative to understand whether the correlation between size and stage can determine whether the patient can overcome the disease or not.
+
+``` {r size vs stage, message = FALSE, warning = FALSE, echo = FALSE}
+ggplot(
+  df4,
+  aes(x=tumor_size, y=tumor_stage,
+      group=death_from_cancer)) +
+  geom_point(aes(color=death_from_cancer)) +
+  geom_smooth(aes(color=death_from_cancer)) +
+  guides(color = guide_legend(title = "Existence Status")) +
+  labs(title="Relationship between tumor size and stage of cancer",
+       y="Breast Cancer Stage",
+       x="Tumor Size (mm)") +
+  theme_classic() 
+```
+
+Observations:
+
+a. We see that in patients who died of the disease, the stage of the cancer has greater influence on the survival rate than the tumor size. 
+
+b. From the above plot it is difficult to firmly establish the correlation between the size and stage and its influence on the survival rate. We wish to explore the impact of therapies (chemo, hormonal and radio) in the upcoming analysis to better understand what factors actually impact the chance of survival. 
+
+c. As we come across deaths from tumors of size less than 25 mm and also greater than 150 mm, in the preliminary analysis, we can say that the chance of survival seems to be tumor size agnostic.
+
+
+## References
+
+1. Dataset link: (https://www.kaggle.com/datasets/raghadalharbi/breast-cancer-gene-expression-profiles-metabric)
+
+2. Associations between genomic stratification of breast cancer and centrally reviewed tumour pathology in the METABRIC cohort - (https://www.nature.com/articles/s41523-018-0056-8)
+
+3. Breast Cancer Stages - (https://www.cancer.org/cancer/breast-cancer/understanding-a-breast-cancer-diagnosis/stages-of-breast-cancer.html)
+
+
+
+
+
+
+
+
+
